@@ -15,11 +15,14 @@ const NavBar = () => {
   const navigate = useNavigate();
 
   const logout = async () => {
-    const res = await fetch(`/api/Api/Auth/Logout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${import.meta.env.VITE_TARGET_API}/Api/Auth/Logout`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
 
     const data = await res.json();
     if (data.ok) {
