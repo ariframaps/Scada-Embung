@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import ChannelPreview from "../../components/ChannelPreview";
-import { channelsData } from "../../data/channel";
+import { activeChannels } from "../../data/channel";
 import { Button, ButtonGroup } from "flowbite-react";
 import ConfirmModal from "../../components/ConfirmModal";
 import LoadingIcon from "../../components/LoadingIcon";
@@ -8,7 +8,7 @@ import { getChannelValue, sendCommand } from "../../lib/api";
 import { GAUGE_ANIMATION_TIME, POLLING_TIME } from "../../data/constant";
 
 const HomePage = () => {
-	const chnNums = channelsData.map((ch) => ch.channelNumber);
+	const chnNums = activeChannels.map((ch) => ch.channelNumber);
 	const [channelsValue, setChannelsValue] = useState();
 	const [openOrCloseStatus, setOpenOrCloseStatus] = useState(null); // "open" or "close" or "null"
 	const [isSendingCommand, setIsSendingCommand] = useState(false);
@@ -163,7 +163,7 @@ const HomePage = () => {
 							key={item.cnlNum}
 							data={item}
 							name={
-								channelsData.find(
+								activeChannels.find(
 									(ch) => ch.channelNumber == item.cnlNum
 								).channelName
 							}

@@ -1,6 +1,6 @@
 const type = ["Embung"];
 
-export const channelsData = [
+export const activeChannels = [
 	{
 		channelNumber: 101,
 		channelName: type[0] + " 1",

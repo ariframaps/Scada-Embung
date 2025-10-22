@@ -6,7 +6,7 @@ import {
 	useGaugeState,
 } from "@mui/x-charts/Gauge";
 import { useNavigate, useParams } from "react-router-dom";
-import { channelsData } from "../../data/channel";
+import { activeChannels } from "../../data/channel";
 import { ArrowLeftIcon, Button } from "flowbite-react";
 import LoadingIcon from "../../components/LoadingIcon";
 import { getChannelValue, sendCommand } from "../../lib/api";
@@ -15,7 +15,9 @@ import { GAUGE_ANIMATION_TIME, POLLING_TIME } from "../../data/constant";
 export default function ChannelPage() {
 	const navigate = useNavigate();
 	const { id } = useParams(); // get product id from  url
-	const channelData = channelsData.find((c) => c.channelName == decodeURI(id));
+	const channelData = activeChannels.find(
+		(c) => c.channelName == decodeURI(id)
+	);
 	if (!channelData) navigate("/not-found", { replace: true });
 
 	const [channelValue, setChannelValue] = useState();
