@@ -1,0 +1,99 @@
+export const login = async (username, password) => {
+	try {
+		const res = await fetch(
+			`${import.meta.env.VITE_TARGET_API}/Api/Auth/Login`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ username, password }),
+			}
+		);
+
+		const data = await res.json();
+
+		if (!data.ok) {
+			// return the API message so the component can handle it
+			return { success: false, message: data.msg || "Login gagal" };
+		}
+
+		// set a manual timeout for session expiration (30 minutes)
+		setTimeout(() => {
+			logout();
+		}, import.meta.env.VITE_SESSION_MAX_TIME);
+
+		return { success: true };
+	} catch (error) {
+		return { success: false, message: "Terjadi kesalahan jaringan." };
+	}
+};
+
+// logout
+export const logout = async () => {
+	await fetch(`${import.meta.env.VITE_TARGET_API}/Api/Auth/Logout`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		credentials: "include",
+	});
+
+	alert("Sesi anda telah berakhir. Silakan login kembali.");
+	window.location.href = "/login"; // full reload
+};
+
+export const getChannelData = async (channelNumbers) => {
+	try {
+		const res = await fetch(
+			`${
+				import.meta.env.VITE_TARGET_API
+			}/Api/Main/GetCurData?cnlNums=${channelNumbers.join(",")}`,
+			{ credentials: "include" }
+		);
+
+		// if session expired
+		if (res.status === 401) await logout();
+
+		const data = await res.json();
+
+		if (!data.ok) throw new Error(data.msg);
+
+		if (data.data?.length === 0) throw new Error("No data was found.");
+
+		return { success: true, data: data.data };
+	} catch (err) {
+		return { success: false, message: err.message };
+	}
+};
+
+export const sendCommand = async (channelNumber, val) => {
+	try {
+		const res = await fetch(
+			`${import.meta.env.VITE_TARGET_API}/Api/Main/SendCommand`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({
+					cnlNum: channelNumber,
+					cmdVal: val,
+				}),
+			}
+		);
+
+		// Handle session expired
+		if (res.status === 401) await logout();
+
+		const data = await res.json();
+
+		if (!data.ok) {
+			return {
+				success: false,
+				message: data.msg || "Gagal menyimpan perubahan",
+			};
+		}
+
+		return { success: true, message: "Perubahan berhasil disimpan" };
+	} catch (err) {
+		console.error("Gagal menyimpan perubahan:", err);
+		return { success: false, message: "Gagal menyimpan perubahan" };
+	}
+};

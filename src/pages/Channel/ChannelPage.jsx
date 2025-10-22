@@ -9,13 +9,15 @@ import { allChannels } from "../../data/data";
 import { ArrowLeftIcon, Button } from "flowbite-react";
 import GaugePointer from "../../components/GaugePointer";
 import LoadingIcon from "../../components/LoadingIcon";
+import { getChannelData, sendCommand } from "../../lib/api";
 
 const ChannelPage = () => {
 	const navigate = useNavigate();
 	const { id } = useParams(); // get product id from  url
 	const channelDetail = allChannels.find(
 		(ch) => ch.channelName == decodeURI(id)
-	); // find channle number based on params (channel name)
+	);
+	if (!channelDetail) navigate("/not-found");
 
 	const [channel, setChannel] = useState();
 	const [isValChanging, setIsValChanging] = useState(false);
@@ -23,41 +25,20 @@ const ChannelPage = () => {
 
 	useEffect(() => {
 		const fetchData = async () => {
-			if (channelDetail) {
-				try {
-					const res = await fetch(
-						`${
-							import.meta.env.VITE_TARGET_API
-						}/Api/Main/GetCurData?cnlNums=${channelDetail.channelNumber}`,
-						{
-							credentials: "include",
-						}
-					);
-
-					if (res.status == 401) {
-						navigate("/login");
-						return;
-					}
-
-					const data = await res.json(); // tunggu JSON-nya
-					setChannel(data.data[0].val);
-				} catch (err) {
-					console.error("Fetch error");
-					setChannel(null);
-				}
-			} else {
-				navigate("/not-found");
+			try {
+				const res = await getChannelData([channelDetail.channelNumber]);
+				if (!res.success) throw new Error(res.message);
+				setChannel(res.data[0].val);
+			} catch (err) {
+				setChannel(null);
+				return console.log(err.message);
 			}
 		};
 
 		const interval = setInterval(() => {
-			if (isValChanging) {
-				// lagi proses open/close, jangan fetch
-				return;
-			}
-
+			if (isValChanging) return;
 			fetchData(); // polling
-		}, 3000);
+		}, import.meta.env.VITE_POLLING_TIME);
 
 		return () => clearInterval(interval); // cleanup!
 	}, [isValChanging]);
@@ -75,7 +56,7 @@ const ChannelPage = () => {
 			} else {
 				setIsValChanging(false); // stop kalau udah mentok
 			}
-		}, 100); // delay-nya
+		}, import.meta.env.VITE_GAUGE_ANIMATION_TIME);
 
 		return () => clearTimeout(timer);
 	}, [channel, isValChanging, mode]);
@@ -84,30 +65,11 @@ const ChannelPage = () => {
 		setIsValChanging(false);
 
 		try {
-			const res = await fetch(
-				`${import.meta.env.VITE_TARGET_API}/Api/Main/SendCommand`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					credentials: "include",
-					body: JSON.stringify({
-						cnlNum: channelDetail.channelNumber,
-						cmdVal: channel,
-					}),
-				}
-			);
-
-			if (res.status == 401) {
-				navigate("/login");
-				return;
-			}
-
-			const data = await res.json();
-			if (data.ok) {
-				console.log("Berhasil merubah channel");
-			}
+			const res = await sendCommand(channelDetail.channelNumber, channel);
+			if (!res.success) throw new Error(res.message);
+			console.log("Berhasil merubah channel");
 		} catch (err) {
-			console.error("Gagal merubah nilai");
+			console.error(err.message || "Gagal merubah nilai");
 			alert(`Gagal menyimpan perubahan`);
 		}
 	}

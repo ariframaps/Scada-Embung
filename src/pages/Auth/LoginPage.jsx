@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button, Label, TextInput, Alert } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
 import Loading from "../../components/Loading";
+import { login } from "../../lib/api";
 
 const LoginPage = () => {
 	const navigate = useNavigate();
@@ -12,42 +13,22 @@ const LoginPage = () => {
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 
-	const login = async () => {
-		setIsLoading(true);
-		if (!username || !password) {
-			setError("Username dan password wajib diisi.");
-			setIsLoading(false);
-			return;
-		}
-
+	const handleLogin = async (e) => {
+		e.preventDefault();
 		try {
-			const res = await fetch(
-				`${import.meta.env.VITE_TARGET_API}/Api/Auth/Login`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					credentials: "include",
-					body: JSON.stringify({ username, password }),
-				}
-			);
+			setIsLoading(true);
 
-			const data = await res.json();
-			if (data.ok) {
-				console.log("Login berhasil");
-				// sendEmail();
-			} else {
-				throw new Error("Login gagal");
-			}
+			if (!username || !password)
+				throw new Error("Isi username dan password!");
 
-			setTimeout(() => {
-				setLoggedOut();
-				alert("Sesi anda telah habis, silahkan login kembali");
-			}, 1800000);
+			const res = await login(username, password);
+			if (!res.success) throw new Error(res.message);
 
 			navigate("/");
 			setError(""); // bersihin error kalau sebelumnya ada
 		} catch (err) {
-			setError("Username atau password salah.");
+			setError(err.message);
+		} finally {
 			setIsLoading(false);
 		}
 	};
@@ -56,10 +37,7 @@ const LoginPage = () => {
 		<div className="w-screen h-[70vh] flex justify-center items-center px-[10vw]">
 			<form
 				className="flex w-full sm:w-md flex-col gap-4 text-start"
-				onSubmit={(e) => {
-					e.preventDefault();
-					login();
-				}}>
+				onSubmit={handleLogin}>
 				<div>
 					<div className="mb-2 block">
 						<Label htmlFor="username">Username</Label>
