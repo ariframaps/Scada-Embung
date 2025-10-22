@@ -1,14 +1,13 @@
+import { SESSION_MAX_TIME, TARGET_API } from "../data/constant";
+
 export const login = async (username, password) => {
 	try {
-		const res = await fetch(
-			`${import.meta.env.VITE_TARGET_API}/Api/Auth/Login`,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				credentials: "include",
-				body: JSON.stringify({ username, password }),
-			}
-		);
+		const res = await fetch(`${TARGET_API}/Api/Auth/Login`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			credentials: "include",
+			body: JSON.stringify({ username, password }),
+		});
 
 		const data = await res.json();
 
@@ -20,17 +19,18 @@ export const login = async (username, password) => {
 		// set a manual timeout for session expiration (30 minutes)
 		setTimeout(() => {
 			logout();
-		}, import.meta.env.VITE_SESSION_MAX_TIME);
+		}, SESSION_MAX_TIME);
 
 		return { success: true };
 	} catch (error) {
+		console.error(error);
 		return { success: false, message: "Terjadi kesalahan jaringan." };
 	}
 };
 
 // logout
 export const logout = async () => {
-	await fetch(`${import.meta.env.VITE_TARGET_API}/Api/Auth/Logout`, {
+	await fetch(`${TARGET_API}/Api/Auth/Logout`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		credentials: "include",
@@ -40,12 +40,12 @@ export const logout = async () => {
 	window.location.href = "/login"; // full reload
 };
 
-export const getChannelData = async (channelNumbers) => {
+export const getChannelValue = async (channelNumbers) => {
 	try {
 		const res = await fetch(
-			`${
-				import.meta.env.VITE_TARGET_API
-			}/Api/Main/GetCurData?cnlNums=${channelNumbers.join(",")}`,
+			`${TARGET_API}/Api/Main/GetCurData?cnlNums=${channelNumbers.join(
+				","
+			)}`,
 			{ credentials: "include" }
 		);
 
@@ -66,18 +66,15 @@ export const getChannelData = async (channelNumbers) => {
 
 export const sendCommand = async (channelNumber, val) => {
 	try {
-		const res = await fetch(
-			`${import.meta.env.VITE_TARGET_API}/Api/Main/SendCommand`,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				credentials: "include",
-				body: JSON.stringify({
-					cnlNum: channelNumber,
-					cmdVal: val,
-				}),
-			}
-		);
+		const res = await fetch(`${TARGET_API}/Api/Main/SendCommand`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			credentials: "include",
+			body: JSON.stringify({
+				cnlNum: channelNumber,
+				cmdVal: val,
+			}),
+		});
 
 		// Handle session expired
 		if (res.status === 401) await logout();

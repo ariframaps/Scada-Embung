@@ -1,38 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import ChannelPreview from "../../components/ChannelPreview";
-import { allChannels, channelNumbers } from "../../data/data";
+import { channelsData } from "../../data/channel";
 import { Button, ButtonGroup } from "flowbite-react";
 import ConfirmModal from "../../components/ConfirmModal";
 import LoadingIcon from "../../components/LoadingIcon";
-import { getChannelData, sendCommand } from "../../lib/api";
+import { getChannelValue, sendCommand } from "../../lib/api";
+import { GAUGE_ANIMATION_TIME, POLLING_TIME } from "../../data/constant";
 
 const HomePage = () => {
-	const [channelsData, setChannelsData] = useState();
-	const [openOrCloseStatus, setOpenOrCloseStatus] = useState(null);
+	const chnNums = channelsData.map((ch) => ch.channelNumber);
+	const [channelsValue, setChannelsValue] = useState();
+	const [openOrCloseStatus, setOpenOrCloseStatus] = useState(null); // "open" or "close" or "null"
 	const [isSendingCommand, setIsSendingCommand] = useState(false);
 	const changeInterval = useRef(null); // ✅ store interval for the changing values
 
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				const res = await getChannelData(channelNumbers); //ambil data
-				if (!res.success) throw new Error(res.message); // jika gagal fetch maka throw error
-				setChannelsData(res.data);
-			} catch (err) {
-				setChannelsData(null);
-				console.error("Fetch error ", err.message);
-			}
-		};
+	const fetchData = async () => {
+		const res = await getChannelValue(chnNums); //ambil data
+		if (!res.success) return setChannelsValue(null);
+		return setChannelsValue(res.data);
+	};
 
-		const interval = setInterval(() => {
-			if (openOrCloseStatus !== null) return;
-			else fetchData(); // polling
-		}, import.meta.env.VITE_POLLING_TIME);
-
-		return () => clearInterval(interval); // cleanup!
-	}, [openOrCloseStatus]);
-
-	function handleChangeValue(type) {
+	const handleChangeValue = (type) => {
 		// ✅ clear existing interval before starting new one
 		if (changeInterval.current) {
 			clearInterval(changeInterval.current);
@@ -41,71 +29,79 @@ const HomePage = () => {
 
 		if (type === null) return setOpenOrCloseStatus(null);
 
-		let newData = [...channelsData];
-
+		let newData = [...channelsValue];
 		changeInterval.current = setInterval(async () => {
 			setOpenOrCloseStatus(type);
 
 			newData = newData.map((ch) => {
 				if (type === "open") {
 					if (ch.val < 100) return { ...ch, val: ch.val + 1 };
-				} else {
+				} else if (type === "close") {
 					if (ch.val > 0) return { ...ch, val: ch.val - 1 };
 				}
 				return ch;
 			});
 
-			setChannelsData(newData);
-
-			let isDone = newData.every((ch) => ch.val >= 100 && ch.val <= 0);
+			setChannelsValue(newData);
+			const isDone = newData.every((ch) => {
+				if (type === "open") return ch.val >= 100;
+				else if (type === "close") return ch.val <= 0;
+			});
 
 			if (isDone) {
 				clearInterval(changeInterval.current);
 				changeInterval.current = null;
-				await sendAllChannels();
+				await sendAllChannels(newData);
 			}
-		}, import.meta.env.VITE_GAUGE_ANIMATION_TIME);
-	}
+		}, GAUGE_ANIMATION_TIME);
+	};
 
-	async function sendAllChannels() {
+	const sendAllChannels = async (newData) => {
+		handleChangeValue(null);
 		setOpenOrCloseStatus(null);
 		setIsSendingCommand(true);
 
-		try {
-			handleChangeValue(null);
-
-			const errors = [];
-			for (const ch of channelsData) {
-				const res = await sendCommand(ch.cnlNum, ch.val);
-				if (!res.success) errors.push(ch.cnlNum);
-			}
-
-			if (errors.length > 0) {
-				alert(`gagal menyimpan perubahan pada embung ${errors.join(", ")}`);
-			} else {
-				alert(`perubahan berhasil disimpan`);
-			}
-		} catch (err) {
-			setChannelsData(null);
-			alert(`Gagal menyimpan perubahan`);
-		} finally {
-			setIsSendingCommand(false);
+		const errors = [];
+		for (const ch of newData) {
+			const res = await sendCommand(ch.cnlNum, ch.val);
+			if (!res.success) errors.push(ch.cnlNum);
 		}
-	}
 
-	if (channelsData === undefined)
+		if (errors.length > 0) {
+			alert(`gagal menyimpan perubahan pada embung ${errors.join(", ")}`);
+			return setChannelsValue(null);
+		}
+
+		setIsSendingCommand(false);
+		return alert(`perubahan berhasil disimpan`);
+	};
+
+	useEffect(() => {
+		fetchData();
+	}, []);
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			if (openOrCloseStatus !== null) return;
+			else fetchData(); // polling
+		}, POLLING_TIME);
+
+		return () => clearInterval(interval); // cleanup!
+	}, [openOrCloseStatus, chnNums]);
+
+	if (channelsValue === undefined)
 		return (
 			<div className="my-[35vh] text-black">
 				<LoadingIcon />
 			</div>
 		);
-	else if (channelsData === null)
+	else if (channelsValue === null)
 		return (
 			<p className="my-[35vh] text-black px-[10vw]">
 				Terjadi kesalahan saat membaca data, Coba untuk refresh halaman.
 			</p>
 		);
-	else if (channelsData.length == 0) {
+	else if (channelsValue.length == 0) {
 		return (
 			<p className="my-[35vh] text-black">
 				Tidak ada data untuk ditampilkan
@@ -117,7 +113,11 @@ const HomePage = () => {
 				<div>
 					<ButtonGroup outline className="flex">
 						<ConfirmModal
-							disabled={openOrCloseStatus !== null || isSendingCommand}
+							disabled={
+								openOrCloseStatus !== null ||
+								isSendingCommand ||
+								channelsValue.every((ch) => ch.val >= 100)
+							}
 							btnClassName={
 								"flex-1 text-xs md:text-sm px-0 bg-green-50 text-green-900 border-green-900 disabled:bg-white disabled:text-gray-500 duration-200"
 							}
@@ -128,7 +128,7 @@ const HomePage = () => {
 						/>
 						<Button
 							disabled={openOrCloseStatus === null}
-							onClick={sendAllChannels}
+							onClick={() => sendAllChannels(channelsValue)}
 							className={`flex-1 text-xs md:text-sm px-0 duration-200 disabled:text-gray-500 ${
 								openOrCloseStatus !== null &&
 								"bg-blue-200 text-blue-900"
@@ -147,14 +147,23 @@ const HomePage = () => {
 						/>
 					</ButtonGroup>
 				</div>
-				<ul className="w-full grid place-items-center 2xl:grid-cols-3 xl:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-7">
-					{channelsData.map((item) => (
+				{isSendingCommand ? (
+					<div className="flex items-center justify-center gap-5">
+						Mengirim data...
+						<LoadingIcon size={20} />
+					</div>
+				) : null}
+				<ul className="relative w-full grid place-items-center 2xl:grid-cols-3 xl:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-7">
+					{(isSendingCommand || openOrCloseStatus !== null) && (
+						<div className="absolute inset-0 w-full h-full z-[1000]"></div>
+					)}
+					{channelsValue.map((item) => (
 						<ChannelPreview
 							disabled={openOrCloseStatus !== null || isSendingCommand}
 							key={item.cnlNum}
 							data={item}
 							name={
-								allChannels.find(
+								channelsData.find(
 									(ch) => ch.channelNumber == item.cnlNum
 								).channelName
 							}

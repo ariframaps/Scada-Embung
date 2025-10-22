@@ -1,86 +1,94 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
 	GaugeContainer,
 	GaugeValueArc,
 	GaugeReferenceArc,
+	useGaugeState,
 } from "@mui/x-charts/Gauge";
 import { useNavigate, useParams } from "react-router-dom";
-import { allChannels } from "../../data/data";
+import { channelsData } from "../../data/channel";
 import { ArrowLeftIcon, Button } from "flowbite-react";
-import GaugePointer from "../../components/GaugePointer";
 import LoadingIcon from "../../components/LoadingIcon";
-import { getChannelData, sendCommand } from "../../lib/api";
+import { getChannelValue, sendCommand } from "../../lib/api";
+import { GAUGE_ANIMATION_TIME, POLLING_TIME } from "../../data/constant";
 
-const ChannelPage = () => {
+export default function ChannelPage() {
 	const navigate = useNavigate();
 	const { id } = useParams(); // get product id from  url
-	const channelDetail = allChannels.find(
-		(ch) => ch.channelName == decodeURI(id)
-	);
-	if (!channelDetail) navigate("/not-found");
+	const channelData = channelsData.find((c) => c.channelName == decodeURI(id));
+	if (!channelData) navigate("/not-found", { replace: true });
 
-	const [channel, setChannel] = useState();
-	const [isValChanging, setIsValChanging] = useState(false);
-	const [mode, setMode] = useState(null); // "up" or "down"
+	const [channelValue, setChannelValue] = useState();
+	const [openOrCloseStatus, setOpenOrCloseStatus] = useState(null); // "open" or "close" or "null"
+	const [isSendingCommand, setIsSendingCommand] = useState(false);
+	const changeInterval = useRef(null); // ✅ store interval for the changing values
+
+	const fetchData = async () => {
+		const res = await getChannelValue([channelData.channelNumber]);
+		if (!res.success) return setChannelValue(null);
+		setChannelValue(res.data[0].val);
+	};
+
+	const handleChangeValue = (type) => {
+		// ✅ clear existing interval before starting new one
+		if (changeInterval.current) {
+			clearInterval(changeInterval.current);
+			changeInterval.current = null;
+		}
+
+		if (type === null) return setOpenOrCloseStatus(null);
+
+		let newValue = channelValue;
+		changeInterval.current = setInterval(async () => {
+			setOpenOrCloseStatus(type);
+
+			if (type === "open") newValue += 1;
+			else if (type === "close") newValue -= 1;
+			setChannelValue(newValue);
+
+			if (newValue == 100 || newValue == 0) {
+				clearInterval(changeInterval.current);
+				changeInterval.current = null;
+				await sendAllChannels(newValue);
+			}
+		}, GAUGE_ANIMATION_TIME);
+	};
+
+	const sendAllChannels = async (newValue) => {
+		handleChangeValue(null);
+		setOpenOrCloseStatus(null);
+		setIsSendingCommand(true);
+
+		const res = await sendCommand(channelData.channelNumber, newValue);
+		if (!res.success) {
+			setChannelValue(null);
+			return alert(`Gagal menyimpan perubahan, ${res.message}`);
+		}
+
+		setIsSendingCommand(false);
+		return alert(`perubahan berhasil disimpan`);
+	};
 
 	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				const res = await getChannelData([channelDetail.channelNumber]);
-				if (!res.success) throw new Error(res.message);
-				setChannel(res.data[0].val);
-			} catch (err) {
-				setChannel(null);
-				return console.log(err.message);
-			}
-		};
+		fetchData();
+	}, []);
 
+	useEffect(() => {
 		const interval = setInterval(() => {
-			if (isValChanging) return;
-			fetchData(); // polling
-		}, import.meta.env.VITE_POLLING_TIME);
+			if (openOrCloseStatus !== null) return;
+			else fetchData(); // polling
+		}, POLLING_TIME);
 
 		return () => clearInterval(interval); // cleanup!
-	}, [isValChanging]);
+	}, [openOrCloseStatus, channelData.channelNumber]);
 
-	useEffect(() => {
-		if (!isValChanging) return;
-
-		const timer = setTimeout(() => {
-			if (channel === 100 && mode === "up") stop();
-			if (channel === 0 && mode === "down") stop();
-			if (mode === "up" && channel < 100) {
-				setChannel((prev) => prev + 1);
-			} else if (mode === "down" && channel >= 1) {
-				setChannel((prev) => prev - 1);
-			} else {
-				setIsValChanging(false); // stop kalau udah mentok
-			}
-		}, import.meta.env.VITE_GAUGE_ANIMATION_TIME);
-
-		return () => clearTimeout(timer);
-	}, [channel, isValChanging, mode]);
-
-	async function stop() {
-		setIsValChanging(false);
-
-		try {
-			const res = await sendCommand(channelDetail.channelNumber, channel);
-			if (!res.success) throw new Error(res.message);
-			console.log("Berhasil merubah channel");
-		} catch (err) {
-			console.error(err.message || "Gagal merubah nilai");
-			alert(`Gagal menyimpan perubahan`);
-		}
-	}
-
-	if (channel === undefined)
+	if (channelValue === undefined)
 		return (
 			<div className="my-[35vh] text-black">
 				<LoadingIcon />
 			</div>
 		);
-	if (channel === null)
+	if (channelValue === null)
 		return (
 			<p className="my-[35vh] text-black px-[10vw]">
 				Terjadi kesalahan saat membaca data, Coba untuk refresh halaman.
@@ -97,7 +105,7 @@ const ChannelPage = () => {
 					<ArrowLeftIcon />
 				</Button>
 				<h1 className="flex-1 font-bold text-3xl">
-					{channelDetail.channelName}
+					{channelData.channelName}
 				</h1>
 			</div>
 			<div className=" w-screen h-[70vh] flex flex-col items-center justify-center text-center text-2xl">
@@ -105,7 +113,7 @@ const ChannelPage = () => {
 					<GaugeContainer
 						width={200}
 						height={150}
-						value={channel}
+						value={channelValue}
 						startAngle={-110}
 						endAngle={110}
 						innerRadius={50}>
@@ -113,48 +121,76 @@ const ChannelPage = () => {
 						<GaugeValueArc />
 						<GaugePointer />
 					</GaugeContainer>
-					<p>{channel}%</p>
+					<p>{channelValue}%</p>
 				</div>
 
 				<div className="flex gap-4 mt-24 justify-center w-full text-xl px-[5vw]">
 					<Button
-						disabled={isValChanging || channel === 100}
+						disabled={
+							openOrCloseStatus !== null ||
+							isSendingCommand ||
+							channelValue === 100
+						}
 						className="h-20"
 						color={"green"}
 						size="xl"
-						onClick={() => {
-							if (isValChanging) return;
-							setMode("up");
-							setIsValChanging(true);
-						}}>
+						onClick={() => handleChangeValue("open")}>
 						Buka
 					</Button>
 					<Button
-						disabled={!isValChanging}
+						disabled={openOrCloseStatus == null}
 						className={`duration-200 h-20 ${
-							isValChanging && "border-black scale-110"
+							openOrCloseStatus != null && "border-black scale-110"
 						}`}
 						color={"alternative"}
 						size="xl"
-						onClick={stop}>
+						onClick={() => sendAllChannels(channelValue)}>
 						Stop
 					</Button>
 					<Button
-						disabled={isValChanging || channel === 0}
+						disabled={
+							openOrCloseStatus !== null ||
+							isSendingCommand ||
+							channelValue === 0
+						}
 						className="h-20"
 						color={"yellow"}
 						size="xl"
-						onClick={() => {
-							if (isValChanging) return;
-							setMode("down");
-							setIsValChanging(true);
-						}}>
+						onClick={() => handleChangeValue("close")}>
 						Tutup
 					</Button>
 				</div>
+				{isSendingCommand ? (
+					<div className="flex items-center justify-center gap-5 text-base my-7">
+						Mengirim data...
+						<LoadingIcon size={20} />
+					</div>
+				) : null}
 			</div>
 		</>
 	);
-};
+}
 
-export default ChannelPage;
+const GaugePointer = () => {
+	const { valueAngle, outerRadius, cx, cy } = useGaugeState();
+
+	if (valueAngle === null) {
+		// No value to display
+		return null;
+	}
+
+	const target = {
+		x: cx + outerRadius * Math.sin(valueAngle),
+		y: cy - outerRadius * Math.cos(valueAngle),
+	};
+	return (
+		<g>
+			<circle cx={cx} cy={cy} r={5} fill="red" />
+			<path
+				d={`M ${cx} ${cy} L ${target.x} ${target.y}`}
+				stroke="red"
+				strokeWidth={3}
+			/>
+		</g>
+	);
+};

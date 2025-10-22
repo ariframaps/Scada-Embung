@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button, Label, TextInput, Alert } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
-import Loading from "../../components/Loading";
 import { login } from "../../lib/api";
+import LoadingIcon from "../../components/LoadingIcon";
 
 const LoginPage = () => {
 	const navigate = useNavigate();
@@ -15,22 +15,15 @@ const LoginPage = () => {
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
-		try {
-			setIsLoading(true);
+		setIsLoading(true);
 
-			if (!username || !password)
-				throw new Error("Isi username dan password!");
+		if (!username || !password) return setError("Isi username dan password!");
 
-			const res = await login(username, password);
-			if (!res.success) throw new Error(res.message);
+		const res = await login(username, password);
+		if (res.success) return navigate("/");
 
-			navigate("/");
-			setError(""); // bersihin error kalau sebelumnya ada
-		} catch (err) {
-			setError(err.message);
-		} finally {
-			setIsLoading(false);
-		}
+		setError(res.message);
+		setIsLoading(false);
 	};
 
 	return (
@@ -81,7 +74,7 @@ const LoginPage = () => {
 				)}
 
 				<Button disabled={isLoading} type="submit">
-					{isLoading ? <Loading size={5} /> : "Login"}
+					{isLoading ? <LoadingIcon size={5} type="spin" /> : "Login"}
 				</Button>
 			</form>
 		</div>
