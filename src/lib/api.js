@@ -59,6 +59,11 @@ export const getChannelValue = async (channelNumbers) => {
 		if (data.data?.length === 0) throw new Error("No data was found.");
 
 		return { success: true, data: data.data };
+		/*
+         datanya itu [
+            {cnlNum: number, val: number, stat: number}
+         ]
+      */
 	} catch (err) {
 		return { success: false, message: err.message };
 	}

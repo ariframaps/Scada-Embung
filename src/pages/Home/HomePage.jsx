@@ -161,7 +161,7 @@ const HomePage = () => {
 						<ChannelPreview
 							disabled={openOrCloseStatus !== null || isSendingCommand}
 							key={item.cnlNum}
-							data={item}
+							value={item.val}
 							name={
 								activeChannels.find(
 									(ch) => ch.channelNumber == item.cnlNum

@@ -1,16 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import {
-	GaugeContainer,
-	GaugeValueArc,
-	GaugeReferenceArc,
-	useGaugeState,
-} from "@mui/x-charts/Gauge";
 import { useNavigate, useParams } from "react-router-dom";
 import { activeChannels } from "../../data/channel";
 import { ArrowLeftIcon, Button } from "flowbite-react";
 import LoadingIcon from "../../components/LoadingIcon";
 import { getChannelValue, sendCommand } from "../../lib/api";
 import { GAUGE_ANIMATION_TIME, POLLING_TIME } from "../../data/constant";
+import GaugeChart from "../../components/GaugeChart";
 
 export default function ChannelPage() {
 	const navigate = useNavigate();
@@ -18,7 +13,7 @@ export default function ChannelPage() {
 	const channelData = activeChannels.find(
 		(c) => c.channelName == decodeURI(id)
 	);
-	if (!channelData) navigate("/not-found", { replace: true });
+	if (!id || !channelData) navigate("/not-found", { replace: true });
 
 	const [channelValue, setChannelValue] = useState();
 	const [openOrCloseStatus, setOpenOrCloseStatus] = useState(null); // "open" or "close" or "null"
@@ -111,20 +106,7 @@ export default function ChannelPage() {
 				</h1>
 			</div>
 			<div className=" w-screen h-[70vh] flex flex-col items-center justify-center text-center text-2xl">
-				<div className="flex flex-col items-center">
-					<GaugeContainer
-						width={200}
-						height={150}
-						value={channelValue}
-						startAngle={-110}
-						endAngle={110}
-						innerRadius={50}>
-						<GaugeReferenceArc />
-						<GaugeValueArc />
-						<GaugePointer />
-					</GaugeContainer>
-					<p>{channelValue}%</p>
-				</div>
+				<GaugeChart value={channelValue} />
 
 				<div className="flex gap-4 mt-24 justify-center w-full text-xl px-[5vw]">
 					<Button
@@ -172,27 +154,3 @@ export default function ChannelPage() {
 		</>
 	);
 }
-
-const GaugePointer = () => {
-	const { valueAngle, outerRadius, cx, cy } = useGaugeState();
-
-	if (valueAngle === null) {
-		// No value to display
-		return null;
-	}
-
-	const target = {
-		x: cx + outerRadius * Math.sin(valueAngle),
-		y: cy - outerRadius * Math.cos(valueAngle),
-	};
-	return (
-		<g>
-			<circle cx={cx} cy={cy} r={5} fill="red" />
-			<path
-				d={`M ${cx} ${cy} L ${target.x} ${target.y}`}
-				stroke="red"
-				strokeWidth={3}
-			/>
-		</g>
-	);
-};

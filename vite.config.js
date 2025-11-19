@@ -6,6 +6,10 @@ import flowbiteReact from "flowbite-react/plugin/vite";
 // https://vite.dev/config/
 export default defineConfig({
 	plugins: [react(), tailwindcss(), flowbiteReact()],
+	test: {
+		environment: "jsdom", // 👈 for React Testing Library,
+		globals: true, // 👈 gives global expect, describe, it
+	},
 	server: {
 		port: 5173,
 		strictPort: true,
@@ -16,7 +20,7 @@ export default defineConfig({
 		},
 		proxy: {
 			"/api": {
-				target: "http://localhost:5000", // arahkan ke Rapid SCADA
+				target: "http://100.106.153.106:8080", // arahkan ke Rapid SCADA
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/api/, ""), // hapus '/api' biar path asli dipake
 			},

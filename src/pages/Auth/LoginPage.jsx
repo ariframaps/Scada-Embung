@@ -17,18 +17,24 @@ const LoginPage = () => {
 		e.preventDefault();
 		setIsLoading(true);
 
-		if (!username || !password) return setError("Isi username dan password!");
+		try {
+			if (!username || !password)
+				throw new Error("Isi username dan password!");
 
-		const res = await login(username, password);
-		if (res.success) return navigate("/");
+			const res = await login(username, password);
+			if (!res.success) throw new Error(res.message);
 
-		setError(res.message);
-		setIsLoading(false);
+			return navigate("/");
+		} catch (error) {
+			setError(error.message);
+			setIsLoading(false);
+		}
 	};
 
 	return (
 		<div className="w-screen h-[70vh] flex justify-center items-center px-[10vw]">
 			<form
+				data-testid="form"
 				className="flex w-full sm:w-md flex-col gap-4 text-start"
 				onSubmit={handleLogin}>
 				<div>
@@ -48,14 +54,28 @@ const LoginPage = () => {
 						<Label htmlFor="password">Password</Label>
 					</div>
 					<div className="flex gap-2">
-						<TextInput
-							id="password"
-							type={showPassword ? "text" : "password"}
-							placeholder="••••••••"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							className="flex-1"
-						/>
+						{showPassword ? (
+							<TextInput
+								data-testid="password"
+								id="password"
+								type="text"
+								placeholder="Password anda"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								className="flex-1"
+							/>
+						) : (
+							<TextInput
+								data-testid="password"
+								id="password"
+								type="password"
+								placeholder="Password anda"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								className="flex-1"
+							/>
+						)}
+
 						<Button
 							type="button"
 							color={"alternative"}

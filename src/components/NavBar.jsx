@@ -9,6 +9,7 @@ import {
 import logo from "../assets/logo.png";
 import { useLocation } from "react-router-dom";
 import { logout } from "../lib/api";
+import { WEB_APP_TITLE } from "../data/constant";
 
 const NavBar = () => {
 	const location = useLocation();
@@ -23,12 +24,14 @@ const NavBar = () => {
 					alt="Kontrol Pipa"
 				/>
 				<span className="self-center whitespace-nowrap text-lg font-semibold text-blue-800">
-					Valve
+					{WEB_APP_TITLE}
 				</span>
 			</NavbarBrand>
-			{location.pathname !== "/login" && <NavbarToggle />}
 			{location.pathname !== "/login" && (
-				<NavbarCollapse className="gap-2">
+				<NavbarToggle data-testid="navbar-toggle" />
+			)}
+			{location.pathname !== "/login" && (
+				<NavbarCollapse className="gap-2" data-testid="navbar-collapse">
 					<NavbarLink
 						active={location.pathname === "/"}
 						className="h-full flex justify-center items-center"

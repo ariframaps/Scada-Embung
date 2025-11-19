@@ -2,7 +2,9 @@ import logo from "../assets/logo.png";
 
 const LoadingIcon = ({ size = 40, type = "logo" }) => {
 	return (
-		<div className="flex justify-center items-center animate-pulse">
+		<div
+			className="flex justify-center items-center animate-pulse"
+			data-testid="loading-icon">
 			{type === "logo" ? (
 				<img src={logo} width={size} alt="Pintu embung" />
 			) : (

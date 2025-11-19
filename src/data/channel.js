@@ -1,36 +1,36 @@
-const type = ["Embung"];
+import { WEB_APP_TITLE } from "./constant";
 
 export const activeChannels = [
 	{
 		channelNumber: 101,
-		channelName: type[0] + " 1",
+		channelName: WEB_APP_TITLE + " 1",
 	},
 	{
 		channelNumber: 102,
-		channelName: type[0] + " 2",
+		channelName: WEB_APP_TITLE + " 2",
 	},
 	{
 		channelNumber: 103,
-		channelName: type[0] + " 3",
+		channelName: WEB_APP_TITLE + " 3",
 	},
 	{
 		channelNumber: 104,
-		channelName: type[0] + " 4",
+		channelName: WEB_APP_TITLE + " 4",
 	},
 	{
 		channelNumber: 105,
-		channelName: type[0] + " 5",
+		channelName: WEB_APP_TITLE + " 5",
 	},
 	{
 		channelNumber: 106,
-		channelName: type[0] + " 6",
+		channelName: WEB_APP_TITLE + " 6",
 	},
 	{
 		channelNumber: 107,
-		channelName: type[0] + " 7",
+		channelName: WEB_APP_TITLE + " 7",
 	},
 	{
 		channelNumber: 108,
-		channelName: type[0] + " 8",
+		channelName: WEB_APP_TITLE + " 8",
 	},
 ];
