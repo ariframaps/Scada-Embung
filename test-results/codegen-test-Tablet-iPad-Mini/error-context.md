@@ -1,0 +1,106 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - link "Kontrol Pipa Embung" [ref=e6]:
+        - /url: /
+        - img "Kontrol Pipa" [ref=e7]
+        - generic [ref=e8]: Embung
+      - list [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Home" [ref=e12]:
+            - /url: /
+        - listitem [ref=e13]:
+          - button "Logout" [ref=e15]
+  - generic [ref=e16]:
+    - group [ref=e18]:
+      - button "Buka semua" [disabled]
+      - button "Stop" [disabled]
+      - button "Tutup semua" [disabled]
+    - generic [ref=e19]:
+      - text: Mengirim data...
+      - img "Pintu embung" [ref=e21]
+    - list [ref=e22]:
+      - link "Embung 1 46" [ref=e24]:
+        - /url: "#"
+        - generic [ref=e26]:
+          - heading "Embung 1" [level=5] [ref=e27]:
+            - text: Embung 1
+            - button [disabled]:
+              - img
+          - meter [ref=e28]:
+            - img [ref=e29]:
+              - generic [ref=e33]: 46%
+      - link "Embung 2 17" [ref=e35]:
+        - /url: "#"
+        - generic [ref=e37]:
+          - heading "Embung 2" [level=5] [ref=e38]:
+            - text: Embung 2
+            - button [disabled]:
+              - img
+          - meter [ref=e39]:
+            - img [ref=e40]:
+              - generic [ref=e44]: 17%
+      - link "Embung 3 32" [ref=e46]:
+        - /url: "#"
+        - generic [ref=e48]:
+          - heading "Embung 3" [level=5] [ref=e49]:
+            - text: Embung 3
+            - button [disabled]:
+              - img
+          - meter [ref=e50]:
+            - img [ref=e51]:
+              - generic [ref=e55]: 32%
+      - link "Embung 4 13" [ref=e57]:
+        - /url: "#"
+        - generic [ref=e59]:
+          - heading "Embung 4" [level=5] [ref=e60]:
+            - text: Embung 4
+            - button [disabled]:
+              - img
+          - meter [ref=e61]:
+            - img [ref=e62]:
+              - generic [ref=e66]: 13%
+      - link "Embung 5 8" [ref=e68]:
+        - /url: "#"
+        - generic [ref=e70]:
+          - heading "Embung 5" [level=5] [ref=e71]:
+            - text: Embung 5
+            - button [disabled]:
+              - img
+          - meter [ref=e72]:
+            - img [ref=e73]:
+              - generic [ref=e77]: 8%
+      - link "Embung 6 58" [ref=e79]:
+        - /url: "#"
+        - generic [ref=e81]:
+          - heading "Embung 6" [level=5] [ref=e82]:
+            - text: Embung 6
+            - button [disabled]:
+              - img
+          - meter [ref=e83]:
+            - img [ref=e84]:
+              - generic [ref=e88]: 58%
+      - link "Embung 7 42" [ref=e90]:
+        - /url: "#"
+        - generic [ref=e92]:
+          - heading "Embung 7" [level=5] [ref=e93]:
+            - text: Embung 7
+            - button [disabled]:
+              - img
+          - meter [ref=e94]:
+            - img [ref=e95]:
+              - generic [ref=e99]: 42%
+      - link "Embung 8 33" [ref=e101]:
+        - /url: "#"
+        - generic [ref=e103]:
+          - heading "Embung 8" [level=5] [ref=e104]:
+            - text: Embung 8
+            - button [disabled]:
+              - img
+          - meter [ref=e105]:
+            - img [ref=e106]:
+              - generic [ref=e110]: 33%
+```
