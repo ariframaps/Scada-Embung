@@ -5,21 +5,21 @@ import {
 	useGaugeState,
 } from "@mui/x-charts/Gauge";
 
-export default function GaugeChart({ value }) {
+export default function GaugeChart({ value, isChannelNormal }) {
 	return (
 		<div className="flex flex-col items-center">
 			<GaugeContainer
 				width={200}
 				height={150}
-				value={value}
+				value={isChannelNormal ? value : 0}
 				startAngle={-110}
 				endAngle={110}
 				innerRadius={50}>
 				<GaugeReferenceArc />
 				<GaugeValueArc />
-				<GaugePointer />
+				{isChannelNormal && <GaugePointer />}
 			</GaugeContainer>
-			<p>{value}%</p>
+			<p>{isChannelNormal ? `${value}%` : "Error!"}</p>
 		</div>
 	);
 }

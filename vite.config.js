@@ -20,7 +20,8 @@ export default defineConfig({
 		},
 		proxy: {
 			"/api": {
-				target: "http://100.106.153.106:8080", // arahkan ke Rapid SCADA
+				// target: "http://100.106.153.106:8080", // arahkan ke Rapid SCADA
+				target: "http://202.155.143.189:10008", // arahkan ke Rapid SCADA
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/api/, ""), // hapus '/api' biar path asli dipake
 			},

@@ -1,3 +1,4 @@
+import { activeChannels } from "../data/channel";
 import { SESSION_MAX_TIME, TARGET_API } from "../data/constant";
 
 export const login = async (username, password) => {
@@ -36,8 +37,22 @@ export const logout = async () => {
 		credentials: "include",
 	});
 
-	alert("Sesi anda telah berakhir. Silakan login kembali.");
 	window.location.href = "/login"; // full reload
+};
+
+export const checkSession = async () => {
+	try {
+		const res = await fetch(
+			`${TARGET_API}/Api/Main/GetCurData?cnlNums=${activeChannels[0].channelNumber}`,
+			{ credentials: "include" }
+		);
+
+		// if session expired
+		if (res.status === 401) return { success: false };
+		return { success: true };
+	} catch (err) {
+		return { success: false };
+	}
 };
 
 export const getChannelValue = async (channelNumbers) => {

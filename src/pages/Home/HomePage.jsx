@@ -162,6 +162,7 @@ const HomePage = () => {
 							disabled={openOrCloseStatus !== null || isSendingCommand}
 							key={item.cnlNum}
 							value={item.val}
+							isChannelNormal={item.stat}
 							name={
 								activeChannels.find(
 									(ch) => ch.channelNumber == item.cnlNum
