@@ -4,8 +4,8 @@ export default async function handler(req, res) {
 	}
 
 	try {
-		const { channelNumbers } = await req.json(); // <-- FIXED
-
+		console.log("ini req body coy", req.body);
+		const { channelNumbers } = req.body;
 		const apiUrl = process.env.TARGET_API;
 
 		const r = await fetch(
@@ -14,10 +14,8 @@ export default async function handler(req, res) {
 		);
 
 		const data = await r.json();
-
 		return res.status(r.status).json(data);
 	} catch (err) {
-		console.error(err);
 		return res.status(500).json({ ok: false, msg: "Server error" });
 	}
 }
