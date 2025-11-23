@@ -14,6 +14,8 @@ export default async function handler(req, res) {
 			{ credentials: "include" }
 		);
 
+		console.log(r);
+
 		const data = await r.json();
 
 		console.log(data);
