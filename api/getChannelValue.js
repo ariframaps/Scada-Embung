@@ -6,19 +6,39 @@ export default async function handler(req, res) {
 	try {
 		const { channelNumbers } = req.body;
 		const apiUrl = process.env.TARGET_API;
-		console.log("ini req body coy", req.body);
-		console.log("ini env", apiUrl);
 
 		const r = await fetch(
 			`${apiUrl}/Api/Main/GetCurData?cnlNums=${channelNumbers.join(",")}`,
 			{ credentials: "include" }
 		);
 
-		console.log(r);
+		console.log("Status:", r.status);
 
-		const data = await r.json();
+		// read response as text first
+		const raw = await r.text();
 
-		console.log(data);
+		console.log("Raw response:", raw);
+
+		// if backend sent no body
+		if (!raw || raw.trim() === "") {
+			return res.status(r.status).json({
+				ok: false,
+				msg: r.status === 401 ? "Unauthorized" : "Empty response",
+			});
+		}
+
+		// try parse JSON safely
+		let data;
+		try {
+			data = JSON.parse(raw);
+		} catch (err) {
+			console.log("JSON parse error:", err);
+			return res
+				.status(500)
+				.json({ ok: false, msg: "Invalid JSON returned" });
+		}
+
+		console.log("Parsed data:", data);
 
 		return res.status(r.status).json(data);
 	} catch (err) {
