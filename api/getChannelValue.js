@@ -1,7 +1,23 @@
 export default async function handler(req, res) {
 	if (req.method !== "POST") {
-		return res.status(405).json({ ok: false, msg: "Method not allowed" });
+		return res
+			.status(405)
+			.json({ success: false, message: "Method not allowed" });
 	}
+
+	const safeParseResponse = async (r) => {
+		const raw = await r.text();
+		if (!raw.trim()) return { empty: true, status: r.status, data: null };
+		try {
+			return { empty: false, status: r.status, data: JSON.parse(raw) };
+		} catch {
+			return {
+				empty: false,
+				status: r.status,
+				data: { ok: false, msg: "Invalid JSON" },
+			};
+		}
+	};
 
 	try {
 		const { channelNumbers } = req.body;
@@ -12,37 +28,27 @@ export default async function handler(req, res) {
 			{ credentials: "include" }
 		);
 
-		console.log("Status:", r.status);
+		const parsed = await safeParseResponse(r);
 
-		// read response as text first
-		const raw = await r.text();
+		// 401 unauthorized (empty body)
+		if (parsed.status === 401) {
+			return res
+				.status(401)
+				.json({ success: false, message: "Unauthorized" });
+		}
 
-		console.log("Raw response:", raw);
-
-		// if backend sent no body
-		if (!raw || raw.trim() === "") {
-			return res.status(r.status).json({
-				ok: false,
-				msg: r.status === 401 ? "Unauthorized" : "Empty response",
+		if (!parsed.data?.ok) {
+			return res.status(400).json({
+				success: false,
+				message: parsed.data?.msg || "API error",
 			});
 		}
 
-		// try parse JSON safely
-		let data;
-		try {
-			data = JSON.parse(raw);
-		} catch (err) {
-			console.log("JSON parse error:", err);
-			return res
-				.status(500)
-				.json({ ok: false, msg: "Invalid JSON returned" });
-		}
-
-		console.log("Parsed data:", data);
-
-		return res.status(r.status).json(data);
+		return res.status(200).json({
+			success: true,
+			data: parsed.data.data,
+		});
 	} catch (err) {
-		console.log("masalah", err.message);
-		return res.status(500).json({ ok: false, msg: "Server error" });
+		return res.status(500).json({ success: false, message: err.message });
 	}
 }
