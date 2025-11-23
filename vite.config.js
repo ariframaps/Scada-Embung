@@ -10,6 +10,9 @@ export default defineConfig({
 		environment: "jsdom", // 👈 for React Testing Library,
 		globals: true, // 👈 gives global expect, describe, it
 	},
+	build: {
+		outDir: "dist",
+	},
 	server: {
 		port: 5173,
 		strictPort: true,
