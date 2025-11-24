@@ -1,7 +1,7 @@
 import { ArrowRightIcon, Button, Card } from "flowbite-react";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 
-const ChannelPreview = ({ value, name, disabled = false }) => {
+const ChannelPreview = ({ value, name, isChannelNormal, disabled = false }) => {
 	let fillColor = "";
 	if (value <= 33) fillColor = "#52b202";
 	else if (value > 33 && value < 67) fillColor = "#ffb703";
@@ -48,7 +48,9 @@ const ChannelPreview = ({ value, name, disabled = false }) => {
 								fill: theme.palette.text.disabled,
 							},
 						})}
-						text={({ value }) => `${value}%`}
+						text={({ value }) =>
+							isChannelNormal ? `${value}%` : "Error!"
+						}
 					/>
 				</div>
 				{disabled && (

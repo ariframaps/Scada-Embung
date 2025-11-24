@@ -16,6 +16,7 @@ export default function ChannelPage() {
 	if (!id || !channelData) navigate("/not-found", { replace: true });
 
 	const [channelValue, setChannelValue] = useState();
+	const [channelStatus, setChannelStatus] = useState();
 	const [openOrCloseStatus, setOpenOrCloseStatus] = useState(null); // "open" or "close" or "null"
 	const [isSendingCommand, setIsSendingCommand] = useState(false);
 	const changeInterval = useRef(null); // ✅ store interval for the changing values
@@ -24,9 +25,12 @@ export default function ChannelPage() {
 		const res = await getChannelValue([channelData.channelNumber]);
 		if (!res.success) return setChannelValue(null);
 		setChannelValue(res.data[0].val);
+		setChannelStatus(res.data[0].stat);
 	};
 
 	const handleChangeValue = (type) => {
+		if (channelStatus === 0) return;
+
 		// ✅ clear existing interval before starting new one
 		if (changeInterval.current) {
 			clearInterval(changeInterval.current);
@@ -106,14 +110,15 @@ export default function ChannelPage() {
 				</h1>
 			</div>
 			<div className=" w-screen h-[70vh] flex flex-col items-center justify-center text-center text-2xl">
-				<GaugeChart value={channelValue} />
+				<GaugeChart value={channelValue} isChannelNormal={channelStatus} />
 
 				<div className="flex gap-4 mt-24 justify-center w-full text-xl px-[5vw]">
 					<Button
 						disabled={
 							openOrCloseStatus !== null ||
 							isSendingCommand ||
-							channelValue === 100
+							channelValue === 100 ||
+							channelStatus === 0
 						}
 						className="h-20"
 						color={"green"}
@@ -135,7 +140,8 @@ export default function ChannelPage() {
 						disabled={
 							openOrCloseStatus !== null ||
 							isSendingCommand ||
-							channelValue === 0
+							channelValue === 0 ||
+							channelStatus === 0
 						}
 						className="h-20"
 						color={"yellow"}

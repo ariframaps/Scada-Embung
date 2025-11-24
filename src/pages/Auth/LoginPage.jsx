@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Label, TextInput, Alert } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../../lib/api";
+import { checkSession, login } from "../../lib/api";
 import LoadingIcon from "../../components/LoadingIcon";
 
 const LoginPage = () => {
@@ -30,6 +30,17 @@ const LoginPage = () => {
 			setIsLoading(false);
 		}
 	};
+
+	useEffect(() => {
+		const checkSessionFunc = async () => {
+			const session = await checkSession();
+			if (session.success && location.pathname !== "/") {
+				navigate("/");
+			}
+		};
+
+		checkSessionFunc();
+	}, []);
 
 	return (
 		<div className="w-screen h-[70vh] flex justify-center items-center px-[10vw]">
